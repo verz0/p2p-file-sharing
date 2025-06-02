@@ -55,12 +55,12 @@ python peer.py 127.0.0.1 --port 8002
 ### 2. LAN/Network Testing (Multiple Machines)
 
 #### Step 1: Find the Tracker Machine's IP
-- On the tracker machine, run `ipconfig` (Windows) or `ifconfig` (Linux/Mac) and note the IPv4 address (e.g., `192.168.1.10`).
+- On the tracker machine, run `ipconfig` (Windows) or `ifconfig` (Linux/Mac) and note the IPv4 address.
 
 #### Step 2: Update `TRACKER_HOST`
 - In both `peer.py` and `tracker_server.py`, set:
   ```python
-  TRACKER_HOST = '192.168.1.10'  # Use your tracker machine's IP
+  TRACKER_HOST = <ip>
   ```
 
 #### Step 3: Start the Tracker
