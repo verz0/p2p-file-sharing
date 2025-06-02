@@ -12,7 +12,7 @@ import os
 import json
 from hashing import verify_chunk
 
-TRACKER_HOST = '10.113.19.149'  # the host IP for the tracker server
+TRACKER_HOST = '127.0.0.1'  # the host IP for the tracker server
 TRACKER_PORT = 9090  # the port on which the tracker server is listening
 MIN_PEERS_REQUIRED = 2  # minimum number of peers required to start downloading chunks
 
@@ -44,6 +44,7 @@ class Peer:
                 meta = json.load(f)
                 self.expected_hashes = meta['piece_hashes']
                 self.total_chunks = len(self.expected_hashes)
+                self.piece_manager = PieceManager(self.total_chunks)  # Ensure piece_manager is initialized for leechers
 
     def start(self):
         """

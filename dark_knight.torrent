@@ -1,0 +1,13 @@
+{
+    "file_name": "dark_knight.txt",
+    "tracker_url": "http://127.0.0.1:9090/announce",
+    "chunk_size": 262144,
+    "total_size": 1072732,
+    "piece_hashes": [
+        "8afcc6a43ecb57c3abb722feda8258de04ac1899",
+        "7a4ea9561a1bc38d8c40cf3d3bf8c3c6a2579c74",
+        "7ba0fac720698051fc68db3cc1f99d09203707d9",
+        "bf07bf07a65dcda4cdda06858ac1a13cbae6e9ea",
+        "f790c6fa858a12786fd02f3ec15062b05dae68c2"
+    ]
+}
