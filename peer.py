@@ -9,13 +9,15 @@ import sys
 import argparse
 import requests
 import os
+import json
+from hashing import verify_chunk
 
-TRACKER_HOST = '127.0.0.1'  # the host IP for the tracker server
+TRACKER_HOST = '10.113.19.149'  # the host IP for the tracker server
 TRACKER_PORT = 9090  # the port on which the tracker server is listening
 MIN_PEERS_REQUIRED = 2  # minimum number of peers required to start downloading chunks
 
 class Peer:
-    def __init__(self, peer_ip, file_to_share=None):
+    def __init__(self, peer_ip, file_to_share=None, torrent_metadata_path=None):
         """
         Initializes the peer with the IP and the file to share
         PARAMETERS:
@@ -24,6 +26,7 @@ class Peer:
         """
         self.peer_ip = peer_ip
         self.file_to_share = file_to_share
+        self.torrent_metadata_path = torrent_metadata_path
         self.peer_chunks = {}  # Store local chunks of the file in memory
         self.received_chunks = set()  # Track downloaded chunks
         self.tracker_peers = {}  # Store other peers and the chunks they have
@@ -33,6 +36,14 @@ class Peer:
         self.top_peers = []  # List of the top 4 peers sorted by upload contribution
         self.optimistic_peer = None  # Randomly select a peer for optimistic unchoking
         self.piece_manager = None  # PieceManager instance
+        self.expected_hashes = None
+
+        if not file_to_share and torrent_metadata_path:
+            # Load expected hashes for leechers
+            with open(torrent_metadata_path, 'r') as f:
+                meta = json.load(f)
+                self.expected_hashes = meta['piece_hashes']
+                self.total_chunks = len(self.expected_hashes)
 
     def start(self):
         """
@@ -357,6 +368,7 @@ if __name__ == "__main__":
     parser.add_argument("peer_ip", nargs="?", help="The public or private IP address of this peer (used for registration)")
     parser.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000, use 0 for random)")
     parser.add_argument("--file", type=str, default=None, help="File to share (required for seeder)")
+    parser.add_argument("--torrent", type=str, default=None, help="Path to .torrent metadata file (required for leechers)")
     parser.add_argument("--auto-public-ip", action="store_true", help="Automatically detect and use public IP for registration")
     args = parser.parse_args()
 
@@ -371,6 +383,6 @@ if __name__ == "__main__":
     else:
         peer_ip = args.peer_ip
 
-    peer = Peer(peer_ip, args.file)
+    peer = Peer(peer_ip, args.file, args.torrent)
     peer.listen_port = args.port
     peer.start()

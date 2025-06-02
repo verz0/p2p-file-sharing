@@ -62,13 +62,13 @@ class TorrentMetadata:
 
 # Example usage
 if __name__ == "__main__":
-    file_path = "/Users/prabhudattamishra/Desktop/P2P/dark_knight.txt"  # Replace with actual file path
+    file_path = "dark_knight.txt"  # Replace with actual file path
     tracker_url = "http://127.0.0.1:9090/announce"  # Example tracker URL
     
     torrent_metadata = TorrentMetadata(file_path, tracker_url)
     
     # Generate and save metadata
-    output_path = "/Users/prabhudattamishra/Desktop/P2P/dark_knight.torrent"  # Modify as needed
+    output_path = "dark_knight.torrent"  # Modify as needed
     torrent_metadata.save_metadata_to_file(output_path)
     
     # Load metadata (for testing)
