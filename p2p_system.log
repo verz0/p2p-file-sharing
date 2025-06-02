@@ -1,0 +1,19 @@
+2025-06-02 16:37:53,668 - peer_optimized - INFO - File download progress: 50.00% (5/10)
+2025-06-02 16:37:53,715 - peer_optimized - ERROR - Error registering with tracker: Connection refused
+2025-06-02 16:37:53,719 - peer_optimized - INFO - Tracker response: PEER_ADDED
+2025-06-02 16:37:53,720 - peer_optimized - INFO - Known peers and their chunks: {'127.0.0.2:9091': [1, 2, 3]}
+2025-06-02 16:37:53,721 - peer_optimized - INFO - Peer count changed from 0 to 1
+2025-06-02 16:37:53,723 - peer_optimized - INFO - Shutting down peer...
+2025-06-02 16:38:05,005 - tracker_server_optimized - INFO - Updated peer 127.0.0.1:8000 with chunks [3, 4, 5].
+2025-06-02 16:38:05,006 - tracker_server_optimized - INFO - Current list of peers: {'127.0.0.1:8000': [3, 4, 5]}
+2025-06-02 16:38:05,045 - tracker_server_optimized - ERROR - Invalid ADD_PEER format: ADD_PEER
+2025-06-02 16:38:05,047 - tracker_server_optimized - INFO - New peer 127.0.0.1:8000 with chunks [1, 2, 3] added.
+2025-06-02 16:38:05,047 - tracker_server_optimized - INFO - Current list of peers: {'127.0.0.1:8000': [1, 2, 3]}
+2025-06-02 16:38:05,049 - tracker_server_optimized - INFO - Peer 127.0.0.1:8000 removed.
+2025-06-02 16:38:05,053 - tracker_server_optimized - INFO - Stopping tracker server...
+2025-06-02 16:42:09,113 - peer_optimized - INFO - File download progress: 50.00% (5/10)
+2025-06-02 16:42:09,115 - peer_optimized - ERROR - Error registering with tracker: Connection refused
+2025-06-02 16:42:09,117 - peer_optimized - INFO - Tracker response: PEER_ADDED
+2025-06-02 16:42:09,118 - peer_optimized - INFO - Known peers and their chunks: {'127.0.0.2:9091': [1, 2, 3]}
+2025-06-02 16:42:09,118 - peer_optimized - INFO - Peer count changed from 0 to 1
+2025-06-02 16:42:09,119 - peer_optimized - INFO - Shutting down peer...
