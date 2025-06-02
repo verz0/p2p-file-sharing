@@ -11,6 +11,8 @@ import requests
 import os
 import json
 from hashing import verify_chunk
+import tkinter as tk
+from tkinter import filedialog, messagebox
 
 TRACKER_HOST = '127.0.0.1'  # the host IP for the tracker server
 TRACKER_PORT = 9090  # the port on which the tracker server is listening
@@ -364,26 +366,171 @@ class Peer:
             self.update_top_peers()  # Update the top peers
             sleep(interval)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Start a P2P peer.")
-    parser.add_argument("peer_ip", nargs="?", help="The public or private IP address of this peer (used for registration)")
-    parser.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000, use 0 for random)")
-    parser.add_argument("--file", type=str, default=None, help="File to share (required for seeder)")
-    parser.add_argument("--torrent", type=str, default=None, help="Path to .torrent metadata file (required for leechers)")
-    parser.add_argument("--auto-public-ip", action="store_true", help="Automatically detect and use public IP for registration")
-    args = parser.parse_args()
+class PeerGUI:
+    def __init__(self, master):
+        self.master = master
+        master.title("P2P File Sharing Peer")
+        master.geometry("480x420")
 
-    if args.auto_public_ip or not args.peer_ip:
-        detected_ip = Peer.get_public_ip()
-        if detected_ip:
-            print(f"[INFO] Detected public IP: {detected_ip}")
-            peer_ip = detected_ip
+        self.role_var = tk.StringVar(value="seeder")
+        self.file_path = tk.StringVar()
+        self.torrent_path = tk.StringVar()
+        self.peer_ip = tk.StringVar(value="127.0.0.1")
+        self.port = tk.StringVar(value="8000")
+        self.tracker_host = tk.StringVar(value=TRACKER_HOST)
+        self.peer_thread = None
+        self.peer_instance = None
+        self.running = False
+
+        # Title
+        tk.Label(master, text="P2P File Sharing Peer", font=("Arial", 16, "bold")).pack(pady=8)
+
+        # Role selection
+        role_frame = tk.Frame(master)
+        role_frame.pack(pady=2)
+        tk.Label(role_frame, text="Peer Role:").pack(side=tk.LEFT)
+        tk.Radiobutton(role_frame, text="Seeder", variable=self.role_var, value="seeder", command=self.toggle_role).pack(side=tk.LEFT)
+        tk.Radiobutton(role_frame, text="Leecher", variable=self.role_var, value="leecher", command=self.toggle_role).pack(side=tk.LEFT)
+
+        # Peer IP/Port/Tracker
+        form_frame = tk.Frame(master)
+        form_frame.pack(pady=2)
+        tk.Label(form_frame, text="Peer IP:").grid(row=0, column=0, sticky=tk.W)
+        tk.Entry(form_frame, textvariable=self.peer_ip, width=18).grid(row=0, column=1)
+        tk.Label(form_frame, text="Port:").grid(row=0, column=2, sticky=tk.W)
+        tk.Entry(form_frame, textvariable=self.port, width=8).grid(row=0, column=3)
+        tk.Label(form_frame, text="Tracker Host:").grid(row=1, column=0, sticky=tk.W)
+        tk.Entry(form_frame, textvariable=self.tracker_host, width=18).grid(row=1, column=1)
+
+        # File/torrent selection
+        self.file_frame = tk.Frame(master)
+        self.file_frame.pack(pady=2)
+        tk.Label(self.file_frame, text="File to Share:").pack(side=tk.LEFT)
+        tk.Entry(self.file_frame, textvariable=self.file_path, width=28).pack(side=tk.LEFT)
+        tk.Button(self.file_frame, text="Browse", command=self.browse_file).pack(side=tk.LEFT)
+
+        self.torrent_frame = tk.Frame(master)
+        self.torrent_frame.pack(pady=2)
+        tk.Label(self.torrent_frame, text=".torrent File:").pack(side=tk.LEFT)
+        tk.Entry(self.torrent_frame, textvariable=self.torrent_path, width=28).pack(side=tk.LEFT)
+        tk.Button(self.torrent_frame, text="Browse", command=self.browse_torrent).pack(side=tk.LEFT)
+
+        # Start/Stop buttons
+        btn_frame = tk.Frame(master)
+        btn_frame.pack(pady=8)
+        self.start_button = tk.Button(btn_frame, text="Start Peer", command=self.start_peer, width=14, bg="#4CAF50", fg="white")
+        self.start_button.pack(side=tk.LEFT, padx=5)
+        self.stop_button = tk.Button(btn_frame, text="Stop Peer", command=self.stop_peer, width=14, state=tk.DISABLED, bg="#f44336", fg="white")
+        self.stop_button.pack(side=tk.LEFT, padx=5)
+        self.new_window_button = tk.Button(btn_frame, text="New Peer Window", command=self.launch_new_window, width=16, bg="#2196F3", fg="white")
+        self.new_window_button.pack(side=tk.LEFT, padx=5)
+
+        # Status label
+        self.status_var = tk.StringVar(value="Idle.")
+        tk.Label(master, textvariable=self.status_var, fg="blue", font=("Arial", 11, "bold")).pack(pady=2)
+
+        # Output box
+        self.output_text = tk.Text(master, height=10, width=58, state=tk.DISABLED, bg="#f7f7f7")
+        self.output_text.pack(pady=4)
+
+        self.toggle_role()
+
+    def toggle_role(self):
+        if self.role_var.get() == "seeder":
+            self.file_frame.pack(pady=2)
+            self.torrent_frame.forget()
         else:
-            print("[ERROR] Could not detect public IP. Please specify --peer_ip manually.")
-            sys.exit(1)
-    else:
-        peer_ip = args.peer_ip
+            self.torrent_frame.pack(pady=2)
+            self.file_frame.forget()
+        self.status_var.set("Idle.")
+        self.clear_output()
 
-    peer = Peer(peer_ip, args.file, args.torrent)
-    peer.listen_port = args.port
-    peer.start()
+    def browse_file(self):
+        path = filedialog.askopenfilename()
+        if path:
+            self.file_path.set(path)
+
+    def browse_torrent(self):
+        path = filedialog.askopenfilename(filetypes=[("Torrent Files", "*.torrent")])
+        if path:
+            self.torrent_path.set(path)
+
+    def launch_new_window(self):
+        import subprocess, sys, os
+        python_exe = sys.executable
+        script_path = os.path.abspath(__file__)
+        subprocess.Popen([python_exe, script_path])
+
+    def start_peer(self):
+        if self.running:
+            messagebox.showinfo("Peer Running", "Peer is already running in this window.\nOpen a new window for another peer.")
+            return
+        role = self.role_var.get()
+        ip = self.peer_ip.get()
+        port = int(self.port.get())
+        tracker = self.tracker_host.get()
+        file = self.file_path.get() if role == "seeder" else None
+        torrent = self.torrent_path.get() if role == "leecher" else None
+        if role == "seeder" and not file:
+            messagebox.showerror("Missing File", "Please select a file to share.")
+            return
+        if role == "leecher" and not torrent:
+            messagebox.showerror("Missing Torrent", "Please select a .torrent file.")
+            return
+        self.clear_output()
+        self.status_var.set(f"Starting {role}...")
+        self.append_output(f"[INFO] Starting {role} on {ip}:{port}\n")
+        global TRACKER_HOST
+        TRACKER_HOST = tracker
+        self.running = True
+        self.start_button.config(state=tk.DISABLED)
+        self.stop_button.config(state=tk.NORMAL)
+        self.peer_thread = threading.Thread(target=self.run_peer, args=(ip, file, torrent, port, role), daemon=True)
+        self.peer_thread.start()
+
+    def run_peer(self, ip, file, torrent, port, role):
+        try:
+            self.peer_instance = Peer(ip, file, torrent)
+            self.peer_instance.listen_port = port
+            # Patch print to redirect output
+            import builtins
+            orig_print = builtins.print
+            def gui_print(*args, **kwargs):
+                msg = ' '.join(str(a) for a in args)
+                self.append_output(msg + "\n")
+                orig_print(*args, **kwargs)
+            builtins.print = gui_print
+            self.peer_instance.start()
+            builtins.print = orig_print
+            self.status_var.set(f"{role.capitalize()} finished. (You are now a seeder!)" if role == "leecher" else f"Seeder running.")
+        except Exception as e:
+            self.append_output(f"[ERROR] {e}\n")
+            self.status_var.set("Error occurred.")
+        finally:
+            self.running = False
+            self.start_button.config(state=tk.NORMAL)
+            self.stop_button.config(state=tk.DISABLED)
+
+    def stop_peer(self):
+        # This is a soft stop; for a real stop, you'd need to add stop logic to Peer
+        self.status_var.set("Peer stopped (restart app to fully stop threads).")
+        self.append_output("[INFO] Peer stopped. (Threads may still be running in background.)\n")
+        self.running = False
+        self.start_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
+
+    def append_output(self, msg):
+        self.output_text.config(state=tk.NORMAL)
+        self.output_text.insert(tk.END, msg)
+        self.output_text.see(tk.END)
+        self.output_text.config(state=tk.DISABLED)
+
+    def clear_output(self):
+        self.output_text.config(state=tk.NORMAL)
+        self.output_text.delete(1.0, tk.END)
+        self.output_text.config(state=tk.DISABLED)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PeerGUI(root)
+    root.mainloop()
